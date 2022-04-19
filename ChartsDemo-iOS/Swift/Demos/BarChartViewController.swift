@@ -22,6 +22,8 @@ class BarChartViewController: DemoBaseViewController {
     @IBOutlet var sliderTextX: UITextField!
     @IBOutlet var sliderTextY: UITextField!
     
+    var lineView: UIView?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -65,7 +67,8 @@ class BarChartViewController: DemoBaseViewController {
         leftAxis.labelCount = 8
         leftAxis.valueFormatter = DefaultAxisValueFormatter(formatter: leftAxisFormatter)
         leftAxis.labelPosition = .outsideChart
-        leftAxis.spaceTop = 0.15
+//        leftAxis.spaceTop = 0.15
+        leftAxis.spaceTop = 0
         leftAxis.axisMinimum = 0 // FIXME: HUH?? this replaces startAtZero = YES
         
         let rightAxis = chartView.rightAxis
@@ -73,7 +76,8 @@ class BarChartViewController: DemoBaseViewController {
         rightAxis.labelFont = .systemFont(ofSize: 10)
         rightAxis.labelCount = 8
         rightAxis.valueFormatter = leftAxis.valueFormatter
-        rightAxis.spaceTop = 0.15
+//        rightAxis.spaceTop = 0.15
+        rightAxis.spaceTop = 0
         rightAxis.axisMinimum = 0
         
         let l = chartView.legend
@@ -97,8 +101,51 @@ class BarChartViewController: DemoBaseViewController {
         chartView.marker = marker
         
         sliderX.value = 12
-        sliderY.value = 50
+        sliderY.minimumValue = 0
+        sliderY.maximumValue = 5
+        sliderY.value = 2
         slidersValueChanged(nil)
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        
+        let contentRect = chartView.contentRect
+        
+
+        
+        let overlay = UIView(frame: contentRect)
+        overlay.backgroundColor = UIColor(red: 0, green: 1.0, blue: 1.0, alpha: 0.4)
+        self.chartView.addSubview(overlay)
+        
+        print("Content rect: \(contentRect)")
+        
+        let totalWidth = contentRect.size.width
+        let totalHeight = contentRect.size.height
+        
+        let spanCount: CGFloat = 5
+        
+        let spanSize = totalHeight / spanCount
+        let viewHeight: CGFloat = 10
+        let topOffset = spanSize * 2 - viewHeight/2
+        
+        
+        let barRect: CGRect = CGRect(x: -6, y: topOffset, width: totalWidth * 2, height: viewHeight)
+        
+        let bar = UIView(frame: barRect)
+        bar.backgroundColor = UIColor(red: 1.0, green: 0.0, blue: 1.0, alpha: 1.0)
+        overlay.addSubview(bar)
+        
+        let customText = UITextView(frame:CGRect(x: 20, y: -10, width: 100, height: 30))
+        
+        customText.text = "Custom Goal"
+        customText.backgroundColor = UIColor(red: 1.0, green: 1.0, blue: 0.0, alpha: 1.0)
+        bar.addSubview(customText)
+        
+        self.updateLinePosition()
+        
+        self.lineView = bar
+        
+        
     }
     
     override func updateChartData() {
@@ -107,13 +154,39 @@ class BarChartViewController: DemoBaseViewController {
             return
         }
         
-        self.setDataCount(Int(sliderX.value) + 1, range: UInt32(sliderY.value))
+        let yRange = 50
+        
+        self.setDataCount(Int(sliderX.value) + 1, range: UInt32(yRange))
+    }
+    
+    
+    func updateLinePosition() {
+        
+        let contentRect = chartView.contentRect
+        
+        let totalWidth = contentRect.size.width
+        let totalHeight = contentRect.size.height
+        
+        let spanCount: CGFloat = 5
+        
+        let spanSize = totalHeight / spanCount
+        let viewHeight: CGFloat = 10
+        let topOffset = spanSize * CGFloat(5 - Int(self.sliderY.value)) - viewHeight/2
+        
+        let barRect: CGRect = CGRect(x: -6, y: topOffset, width: totalWidth * 2, height: viewHeight)
+        self.lineView?.frame = barRect
+        
     }
     
     func setDataCount(_ count: Int, range: UInt32) {
         let start = 1
         
         let yVals = (start..<start+count+1).map { (i) -> BarChartDataEntry in
+            
+            if i == 2 {
+                return BarChartDataEntry(x: Double(i), y: 50)
+            }
+            
             let mult = range + 1
             let val = Double(arc4random_uniform(mult))
             if arc4random_uniform(100) < 25 {
@@ -152,6 +225,11 @@ class BarChartViewController: DemoBaseViewController {
         sliderTextX.text = "\(Int(sliderX.value + 2))"
         sliderTextY.text = "\(Int(sliderY.value))"
         
-        self.updateChartData()
+        if sender as? UISlider == sliderY {
+            self.updateLinePosition()
+        } else {
+            self.updateChartData()
+        }
+        
     }
 }
