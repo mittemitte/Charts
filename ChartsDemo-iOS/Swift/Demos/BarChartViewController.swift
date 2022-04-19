@@ -23,6 +23,9 @@ class BarChartViewController: DemoBaseViewController {
     @IBOutlet var sliderTextY: UITextField!
     
     var lineView: UIView?
+    var lineLabel: UIView?
+    
+    var currentPosition: Int = 2
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -135,11 +138,23 @@ class BarChartViewController: DemoBaseViewController {
         bar.backgroundColor = UIColor(red: 1.0, green: 0.0, blue: 1.0, alpha: 1.0)
         overlay.addSubview(bar)
         
+        bar.layer.masksToBounds = false
+        bar.layer.shadowColor = UIColor.black.cgColor
+        bar.layer.shadowOpacity = 0.5
+        bar.layer.shadowOffset = CGSize(width: 0, height: 1)
+        bar.layer.shadowRadius = 2
+        bar.layer.shouldRasterize = true
+//        bar.layer.rasterizationScale = scale ? UIScreen.main.scale : 1
+        
         let customText = UITextView(frame:CGRect(x: 20, y: -10, width: 100, height: 30))
         
         customText.text = "Custom Goal"
-        customText.backgroundColor = UIColor(red: 1.0, green: 1.0, blue: 0.0, alpha: 1.0)
+        customText.backgroundColor = UIColor(red: 1.0, green: 0.8, blue: 0.2, alpha: 1.0)
         bar.addSubview(customText)
+        
+        customText.layer.cornerRadius = 4
+        
+        self.lineLabel = customText
         
         self.updateLinePosition()
         
@@ -226,7 +241,20 @@ class BarChartViewController: DemoBaseViewController {
         sliderTextY.text = "\(Int(sliderY.value))"
         
         if sender as? UISlider == sliderY {
-            self.updateLinePosition()
+            
+            if Int(sliderY.value) != currentPosition {
+                self.currentPosition = Int(sliderY.value)
+                self.updateLinePosition()
+                
+                lineLabel?.transform = CGAffineTransform.identity.scaledBy(x: 1.4, y: 1.4).rotated(by: CGFloat.random(in: -1.0...1.0))
+                
+                UIView.animate(withDuration: 0.6, delay: 0, usingSpringWithDamping: 0.3, initialSpringVelocity: 0.0, options: [], animations: {
+                    
+                    self.lineLabel?.transform = CGAffineTransform.identity
+                    
+                }, completion: nil)
+            }
+            
         } else {
             self.updateChartData()
         }
